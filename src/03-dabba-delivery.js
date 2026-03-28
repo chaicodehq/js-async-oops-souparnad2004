@@ -76,30 +76,93 @@
  */
 export class DabbaService {
   constructor(serviceName, area) {
-    // Your code here
+    this.serviceName = serviceName;
+    this.area = area;
+    ((this.customers = []), (this._nextId = 1));
   }
 
   addCustomer(name, address, mealPreference) {
-    // Your code here
+    if (
+      !["veg", "nonveg", "jain"].includes(mealPreference) ||
+      this.customers.some((customer) => customer.name === name)
+    )
+      return null;
+    const customer = {
+      id: this._nextId++,
+      name,
+      address,
+      mealPreference,
+      active: true,
+      delivered: false,
+    };
+    this.customers.push(customer);
+    return customer;
   }
 
   removeCustomer(name) {
-    // Your code here
+    const customer = this.customers.find((customer) => customer.name === name);
+    if (customer && customer.active !== false) {
+      customer.active = false;
+      return true;
+    }
+    return false;
   }
 
   createDeliveryBatch() {
-    // Your code here
+    let DeliveryBatch = this.customers.filter((customer) => customer.active === true);
+
+    if(DeliveryBatch.length <= 0) return [];
+
+    DeliveryBatch.forEach(delivery => delivery.delivered = false);
+
+    DeliveryBatch = DeliveryBatch.map((c) => ({
+        customerId: c.id,
+        name: c.name,
+        address: c.address,
+        mealPreference: c.mealPreference,
+        batchTime: new Date().toISOString(),
+      }));
+
+    return DeliveryBatch || [];
   }
 
   markDelivered(customerId) {
-    // Your code here
+    const customer = this.customers.find(
+      (c) => c.id === customerId && c.active === true,
+    );
+    if (customer && customer.delivered !== true) {
+      customer.delivered = true;
+      return true;
+    }
+    return false;
   }
 
   getDailyReport() {
-    // Your code here
+    let activeCustomers, delivered, pending, mealBreakdown;
+    
+    activeCustomers = this.customers.filter((c) => c.active === true);
+    
+    delivered = activeCustomers.filter((c) => c.delivered === true);
+    
+    pending = activeCustomers.filter((c) => c.delivered === false);
+    
+    mealBreakdown = activeCustomers.reduce(
+      (acc, currCustomer) => {
+        acc[currCustomer.mealPreference]++;
+        return acc;
+      },
+      { veg: 0, nonveg: 0, jain: 0 },
+    );
+
+    return {
+      totalCustomers: activeCustomers.length,
+      delivered: delivered.length,
+      pending: pending.length,
+      mealBreakdown,
+    };
   }
 
   getCustomer(name) {
-    // Your code here
+    return this.customers.find((c) => c.name === name) || null;
   }
 }
